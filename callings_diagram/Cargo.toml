@@ -1,0 +1,8 @@
+[package]
+name = "callings_diagram"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+serde_json = "1.0.134"
+uuid = { version = "1.11.1", features = ["v4"] }

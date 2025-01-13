@@ -1,4 +1,5 @@
 **/target
 *.json
 *.csv
+*.drawio
 .DS_Store

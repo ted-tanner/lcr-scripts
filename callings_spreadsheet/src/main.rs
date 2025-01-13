@@ -5,8 +5,7 @@ mod data;
 
 use data::{Calling, CsvRecord, Date, MemberWithCalling, Organization};
 use std::{
-    collections::HashMap,
-    io::{BufReader, Write},
+    collections::HashMap, fs::File, io::{BufReader, Write}
 };
 
 fn main() {
@@ -17,7 +16,7 @@ fn main() {
         .nth(2)
         .expect("usage: callings-spreadsheet <input_file> <output_file>");
 
-    let input_file = std::fs::File::open(&input_file_path).expect("Could not open input file");
+    let input_file = File::open(&input_file_path).expect("Could not open input file");
     let json: serde_json::Value =
         serde_json::from_reader(BufReader::new(input_file)).expect("Could not parse JSON file");
 
