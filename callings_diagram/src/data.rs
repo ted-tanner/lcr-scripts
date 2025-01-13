@@ -12,22 +12,29 @@ pub struct Date {
 impl Display for Date {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         let month = match self.month {
-            1 => "Jan",
-            2 => "Feb",
-            3 => "Mar",
-            4 => "Apr",
+            1 => "January",
+            2 => "February",
+            3 => "March",
+            4 => "April",
             5 => "May",
-            6 => "Jun",
-            7 => "Jul",
-            8 => "Aug",
-            9 => "Sep",
-            10 => "Oct",
-            11 => "Nov",
-            12 => "Dec",
+            6 => "June",
+            7 => "July",
+            8 => "August",
+            9 => "September",
+            10 => "October",
+            11 => "November",
+            12 => "December",
             m => panic!("Invalid month: {}", m),
         };
 
-        write!(f, "{}, {} {}", self.year, month, self.day)
+        let ordinal_suffix = match self.day {
+            1 | 21 | 31 => "st",
+            2 | 22 => "nd",
+            3 | 23 => "rd",
+            _ => "th",
+        };
+
+        write!(f, "{}, {} {}{}", self.year, month, self.day, ordinal_suffix)
     }
 }
 

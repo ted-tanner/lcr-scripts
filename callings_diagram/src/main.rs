@@ -4,54 +4,63 @@
 mod data;
 
 use data::{Calling, Date, MemberWithCalling, Organization};
-use uuid::Uuid;
 use std::{
-    collections::HashMap, fs::File, io::{BufReader, Write}
+    collections::HashMap,
+    fs::File,
+    io::{BufReader, Write},
 };
+use uuid::Uuid;
 
 struct MarginSet {
-    top: f32,
-    right: f32,
-    bottom: f32,
-    left: f32,
+    top: i32,
+    right: i32,
+    bottom: i32,
+    left: i32,
 }
 
 struct Dimensions {
-    width: f32,
-    height: f32,
+    width: i32,
+    height: i32,
 }
 
 const ORG_BUBBLE_MARGINS: MarginSet = MarginSet {
-    top: 0.0,
-    right: 20.0,
-    bottom: 0.0,
-    left: 20.0,
+    top: 0,
+    right: 40,
+    bottom: 0,
+    left: 40,
 };
 const SUB_ORG_BUBBLE_MARGINS: MarginSet = MarginSet {
-    top: 10.0,
-    right: 10.0,
-    bottom: 10.0,
-    left: 10.0,
+    top: 10,
+    right: 10,
+    bottom: 10,
+    left: 10,
 };
 const CALLING_BUBBLE_MARGINS: MarginSet = MarginSet {
-    top: 15.0,
-    right: 15.0,
-    bottom: 5.0,
-    left: 15.0,
+    top: 10,
+    right: 15,
+    bottom: 10,
+    left: 15,
 };
-
-const ORG_BUBBLE_WIDTH: f32 = 1095.0;
 
 const CALLING_BUBBLE_DIMENSIONS: Dimensions = Dimensions {
-    width: 320.0,
-    height: 100.0,
+    width: 340,
+    height: 110,
 };
 
-const ORG_BUBBLE_TITLE_HEIGHT: f32 = 60.0;
-const CALLING_BUBBLE_TOTAL_HEIGHT: f32 = CALLING_BUBBLE_DIMENSIONS.height + CALLING_BUBBLE_MARGINS.top + CALLING_BUBBLE_MARGINS.bottom;
+const CALLING_BUBBLES_PER_ROW: i32 = 3;
+const ORG_BUBBLE_TITLE_HEIGHT: i32 = 45;
 
-const DIAGRAM_START_X: f32 = -3000.0;
-const DIAGRAM_START_Y: f32 = 0.0;
+const DIAGRAM_START_X: i32 = 0;
+const DIAGRAM_START_Y: i32 = 0;
+
+// Calulated values (not for configuration)
+const CALLING_BUBBLE_TOTAL_HEIGHT: i32 =
+    CALLING_BUBBLE_DIMENSIONS.height + CALLING_BUBBLE_MARGINS.top + CALLING_BUBBLE_MARGINS.bottom;
+const ORG_BUBBLE_WIDTH: i32 =
+    (CALLING_BUBBLE_DIMENSIONS.width + CALLING_BUBBLE_MARGINS.left + CALLING_BUBBLE_MARGINS.right)
+        * CALLING_BUBBLES_PER_ROW
+        + ORG_BUBBLE_MARGINS.left
+        + ORG_BUBBLE_MARGINS.right;
 
 fn main() {
     let input_file_path = std::env::args()
@@ -100,7 +109,8 @@ fn main() {
         if org.children.is_empty() {
             // Place callings directly into org bubble
             let mut calling_cursor_x = org_cursor_x;
-            let mut calling_cursor_y = DIAGRAM_START_Y + ORG_BUBBLE_TITLE_HEIGHT + CALLING_BUBBLE_MARGINS.top;
+            let mut calling_cursor_y =
+                DIAGRAM_START_Y + ORG_BUBBLE_TITLE_HEIGHT + CALLING_BUBBLE_MARGINS.top;
 
             let mut calling_bubbles = Vec::new();
 
@@ -134,7 +144,12 @@ fn main() {
 
                 calling_cursor_x += CALLING_BUBBLE_DIMENSIONS.width + CALLING_BUBBLE_MARGINS.right;
 
-                if calling_cursor_x + CALLING_BUBBLE_MARGINS.left + CALLING_BUBBLE_DIMENSIONS.width + CALLING_BUBBLE_MARGINS.right > ORG_BUBBLE_WIDTH {
+                if calling_cursor_x
+                    + CALLING_BUBBLE_MARGINS.left
+                    + CALLING_BUBBLE_DIMENSIONS.width
+                    + CALLING_BUBBLE_MARGINS.right
+                    > ORG_BUBBLE_WIDTH
+                {
                     calling_cursor_x = org_cursor_x;
 
                     calling_cursor_y += CALLING_BUBBLE_TOTAL_HEIGHT;
@@ -143,8 +158,6 @@ fn main() {
             }
 
             other_bubbles.extend(calling_bubbles);
-
-            org_cursor_x += ORG_BUBBLE_MARGINS.right;
         } else {
             // let mut sub_org_bubbles = Vec::new();
 
@@ -155,17 +168,16 @@ fn main() {
             //         continue;
             //     }
 
-
             //     // Use grandchild org as sub-org bubble
             //     for grandchild_org in &child_org.children {
-                    
+
             //     }
 
             //     // Place child org callings into "Other" bubble
             // }
         }
 
-        org_bubble_height += ORG_BUBBLE_MARGINS.bottom;
+        org_bubble_height += CALLING_BUBBLE_MARGINS.bottom;
 
         let org_bubble = format!(
             r##"
@@ -173,12 +185,7 @@ fn main() {
                       <mxGeometry x="{}" y="{}" width="{}" height="{}" as="geometry" />
                     </mxCell>
             "##,
-            org_id,
-            org_name,
-            org_cursor_x,
-            DIAGRAM_START_Y,
-            ORG_BUBBLE_WIDTH,
-            org_bubble_height,
+            org_id, org_name, org_cursor_x, DIAGRAM_START_Y, ORG_BUBBLE_WIDTH, org_bubble_height,
         );
 
         bubbles.push(org_bubble);
@@ -205,16 +212,22 @@ fn main() {
     let mut output_file =
         std::fs::File::create(&output_file_path).expect("Could not open output file");
 
-    output_file.write(diagram_header.as_bytes()).expect("Could not write diagram header");
+    output_file
+        .write_all(diagram_header.as_bytes())
+        .expect("Could not write diagram header");
     for bubble in bubbles {
-        output_file.write(bubble.as_bytes()).expect("Could not write bubble");
+        output_file
+            .write_all(bubble.as_bytes())
+            .expect("Could not write bubble");
     }
-    output_file.write(diagram_footer.as_bytes()).expect("Could not write diagram header");
+    output_file
+        .write_all(diagram_footer.as_bytes())
+        .expect("Could not write diagram header");
 
     println!("Generated diagram at '{}'", output_file_path);
 }
 
-fn process_child_orgs<'a>(children: &'a serde_json::Value) -> Vec<Organization<'a>> {
+fn process_child_orgs(children: &serde_json::Value) -> Vec<Organization<'_>> {
     let mut processed_child_orgs = Vec::new();
 
     if let Some(children) = children.as_array() {
@@ -236,7 +249,7 @@ fn process_child_orgs<'a>(children: &'a serde_json::Value) -> Vec<Organization<'
     processed_child_orgs
 }
 
-fn process_callings<'a>(callings: &'a serde_json::Value) -> Vec<Calling<'a>> {
+fn process_callings(callings: &serde_json::Value) -> Vec<Calling<'_>> {
     let mut processed_callings = Vec::new();
 
     for json_calling in callings.as_array().expect("Could not read callings array") {
@@ -275,8 +288,16 @@ fn process_callings<'a>(callings: &'a serde_json::Value) -> Vec<Calling<'a>> {
                 let name_parts = member_name.split(",").collect::<Vec<&str>>();
 
                 let member = MemberWithCalling {
-                    given_names: if name_parts.len() > 1 { &name_parts[1] } else { &name_parts[0] },
-                    last_name: if name_parts.len() > 1 { &name_parts[0] } else { "" },
+                    given_names: if name_parts.len() > 1 {
+                        name_parts[1]
+                    } else {
+                        name_parts[0]
+                    },
+                    last_name: if name_parts.len() > 1 {
+                        name_parts[0]
+                    } else {
+                        ""
+                    },
                     email: json_calling["memberEmail"].as_str(),
                     phone: json_calling["memberPhone"].as_str(),
                     held_calling_since,
