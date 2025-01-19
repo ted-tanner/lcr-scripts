@@ -38,15 +38,15 @@ pub fn main() !void {
             else => err_and_exit("{s}", .{invalid_fmt_message}),
         };
 
-        const name = obj.get("name") orelse err_and_exit("{s}", .{invalid_fmt_message});
-        const children = obj.get("children") orelse err_and_exit("{s}", .{invalid_fmt_message});
+        const name = obj.getPtr("name") orelse err_and_exit("{s}", .{invalid_fmt_message});
+        const children = obj.getPtr("children") orelse err_and_exit("{s}", .{invalid_fmt_message});
 
         const org = data.Organization{
-            .name = switch (name) {
-                .string => |v| v,
+            .name = switch (name.*) {
+                .string => |_| &name.string,
                 else => err_and_exit("{s}", .{invalid_fmt_message}),
             },
-            .children = try process_child_orgs(allocator, &children),
+            .children = try process_child_orgs(allocator, children),
             .callings = std.ArrayList(data.Calling).init(allocator), // TODO
         };
 
@@ -55,11 +55,11 @@ pub fn main() !void {
 
     // TODO: Remove this
     for (orgs.items) |org| {
-        std.debug.print("{s}\n", .{org.name});
+        std.debug.print("{s}\n", .{org.name.*});
         for (org.children.items) |child| {
-            std.debug.print("\t{s}\n", .{child.name});
+            std.debug.print("\t{s}\n", .{child.name.*});
             for (child.children.items) |grandchild| {
-                std.debug.print("\t\t{s}\n", .{grandchild.name});
+                std.debug.print("\t\t{s}\n", .{grandchild.name.*});
             }
         }
     }
@@ -73,17 +73,17 @@ fn process_child_orgs(allocator: std.mem.Allocator, parsed_children: *const json
             for (v.items) |parsed_child| {
                 switch (parsed_child) {
                     .object => |obj| {
-                        const child_name = obj.get("name") orelse err_and_exit("{s}", .{invalid_fmt_message});
-                        const children = obj.get("children") orelse err_and_exit("{s}", .{invalid_fmt_message});
-                        const callings = obj.get("callings") orelse err_and_exit("{s}", .{invalid_fmt_message});
+                        const child_name = obj.getPtr("name") orelse err_and_exit("{s}", .{invalid_fmt_message});
+                        const children = obj.getPtr("children") orelse err_and_exit("{s}", .{invalid_fmt_message});
+                        const callings = obj.getPtr("callings") orelse err_and_exit("{s}", .{invalid_fmt_message});
 
                         const child_org = data.Organization{
-                            .name = switch (child_name) {
-                                .string => |n| n,
+                            .name = switch (child_name.*) {
+                                .string => |_| &child_name.string,
                                 else => err_and_exit("{s}", .{invalid_fmt_message}),
                             },
-                            .children = try process_child_orgs(allocator, &children),
-                            .callings = try process_callings(allocator, &callings),
+                            .children = try process_child_orgs(allocator, children),
+                            .callings = try process_callings(allocator, callings),
                         };
 
                         try child_orgs.append(child_org);
@@ -99,11 +99,27 @@ fn process_child_orgs(allocator: std.mem.Allocator, parsed_children: *const json
 }
 
 fn process_callings(allocator: std.mem.Allocator, parsed_callings: *const json.Value) !std.ArrayList(data.Calling) {
-    const callings = std.ArrayList(data.Calling).init(allocator);
+    // var callings = std.ArrayList(data.Calling).init(allocator);
+
+    // switch (parsed_callings.*) {
+    //     .array => |v| {
+    //         for (v.items) |parsed_calling| {
+    //             switch (parsed_calling) {
+    //                 .object => |obj| {
+    //                     const calling_name = obj.getPtr("position") orelse err_and_exit("{s}", .{invalid_fmt_message});
+    //                     // TODO
+    //                 },
+    //                 else => err_and_exit("{s}", .{invalid_fmt_message}),
+    //             }
+    //         }
+    //     }
+    //     else => err_and_exit("{s}", .{invalid_fmt_message}),
+    // }
+
+    // return callings;
 
     _ = parsed_callings;
-
-    return callings;
+    return std.ArrayList(data.Calling).init(allocator);
 }
 
 fn err_and_exit(comptime fmt: []const u8, args: anytype) noreturn {
