@@ -65,10 +65,10 @@ const ORG_BUBBLE_WIDTH: i32 =
 fn main() {
     let input_file_path = std::env::args()
         .nth(1)
-        .expect("usage: callings-spreadsheet <input_file> <output_file>");
+        .expect("usage: callings-diagram <input_file> <output_file>");
     let output_file_path = std::env::args()
         .nth(2)
-        .expect("usage: callings-spreadsheet <input_file> <output_file>");
+        .expect("usage: callings-diagram <input_file> <output_file>");
 
     let input_file = File::open(&input_file_path).expect("Could not open input file");
     let json: serde_json::Value =
