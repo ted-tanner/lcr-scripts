@@ -4,6 +4,7 @@ const DateFormatError = error{
     InvalidMonth,
     InvalidDay,
 };
+
 pub const Date = struct {
     year: u16,
     month: u8,

@@ -8,11 +8,11 @@ const JsonResponseFormatError = error{
     BadFormatting,
 };
 
-pub fn orgs_from_lcr_data(allocator: std.mem.Allocator, lcr_data: []u8) !std.ArrayList(data.Organization) {
+pub fn orgs_from_lcr_data(allocator: std.mem.Allocator, lcr_data: []u8) !std.StringArrayHashMap(data.Organization) {
     const parsed_contents = try json.parseFromSlice(json.Value, allocator, lcr_data, .{});
     defer parsed_contents.deinit();
 
-    var orgs = std.ArrayList(data.Organization).init(allocator);
+    var orgs = std.StringArrayHashMap(data.Organization).init(allocator);
 
     const parsed_orgs = switch (parsed_contents.value) {
         .array => parsed_contents.value.array,
@@ -38,7 +38,7 @@ pub fn orgs_from_lcr_data(allocator: std.mem.Allocator, lcr_data: []u8) !std.Arr
             .callings = try process_callings(allocator, callings),
         };
 
-        try orgs.append(org);
+        try orgs.put(org.name, org);
     }
 
     return orgs;

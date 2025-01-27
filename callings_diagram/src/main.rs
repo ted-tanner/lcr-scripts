@@ -92,139 +92,183 @@ fn main() {
         });
     }
 
-    let mut bubbles = Vec::new();
-    let mut org_cursor_x = DIAGRAM_START_X;
-    let mut calling_iter = 0;
+    // for org in orgs.values() {
+    //     println!("{}", org.name);
+    //     for calling in &org.callings {
+    //         let Some(member) = &calling.member else {
+    //             continue;
+    //         };
+    //         println!(
+    //             "\t{}: {}, {} (Since {})",
+    //             calling.name, member.last_name, member.given_names, member.held_calling_since
+    //         );
+    //     }
 
-    for org_name in ordered_org_names {
-        let org = orgs.get(org_name).expect("Could not find organization");
+    //     for child in &org.children {
+    //         println!("\t{}", child.name);
 
-        org_cursor_x += ORG_BUBBLE_MARGINS.left;
+    //         for calling in &child.callings {
+    //             let Some(member) = &calling.member else {
+    //                 continue;
+    //             };
+    //             println!(
+    //                 "\t\t{}: {}, {} (Since {})",
+    //                 calling.name, member.last_name, member.given_names, member.held_calling_since
+    //             );
+    //         }
 
-        let org_id = format!("ORG-{}", org_name.replace(" ", "-"));
-        let mut org_bubble_height = ORG_BUBBLE_TITLE_HEIGHT + CALLING_BUBBLE_TOTAL_HEIGHT;
+    //         for grandchild in &child.children {
+    //             println!("\t\t{}", grandchild.name);
 
-        let mut other_bubbles = Vec::new();
+    //             for calling in &grandchild.callings {
+    //                 let Some(member) = &calling.member else {
+    //                     continue;
+    //                 };
+    //                 println!(
+    //                     "\t\t\t{}: {}, {} (Since {})",
+    //                     calling.name,
+    //                     member.last_name,
+    //                     member.given_names,
+    //                     member.held_calling_since
+    //                 );
+    //             }
+    //         }
+    //     }
+    // }
 
-        if org.children.is_empty() {
-            // Place callings directly into org bubble
-            let mut calling_cursor_x = org_cursor_x;
-            let mut calling_cursor_y =
-                DIAGRAM_START_Y + ORG_BUBBLE_TITLE_HEIGHT + CALLING_BUBBLE_MARGINS.top;
+    //     let mut bubbles = Vec::new();
+    //     let mut org_cursor_x = DIAGRAM_START_X;
+    //     let mut calling_iter = 0;
 
-            let mut calling_bubbles = Vec::new();
+    //     for org_name in ordered_org_names {
+    //         let org = orgs.get(org_name).expect("Could not find organization");
 
-            for calling in &org.callings {
-                let Some(ref member) = calling.member else {
-                    continue;
-                };
+    //         org_cursor_x += ORG_BUBBLE_MARGINS.left;
 
-                calling_cursor_x += CALLING_BUBBLE_MARGINS.left;
+    //         let org_id = format!("ORG-{}", org_name.replace(" ", "-"));
+    //         let mut org_bubble_height = ORG_BUBBLE_TITLE_HEIGHT + CALLING_BUBBLE_TOTAL_HEIGHT;
 
-                let calling_bubble = format!(
-                    r##"
-                            <mxCell id="calling-{}" value="&lt;div&gt;&lt;b&gt;&lt;font style=&quot;font-size: 18px;&quot;&gt;{}&lt;/font&gt;&lt;/b&gt;&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;{}, {}&lt;/div&gt;&lt;div&gt;Since: {}&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;align=left;spacingLeft=0;spacingTop=0;spacing=10;fontSize=16;" vertex="1" parent="{}">
-                              <mxGeometry x="{}" y="{}" width="{}" height="{}" as="geometry" />
-                            </mxCell>
-                    "##,
-                    calling_iter,
-                    calling.name,
-                    member.last_name,
-                    member.given_names,
-                    member.held_calling_since,
-                    org_id,
-                    calling_cursor_x,
-                    calling_cursor_y,
-                    CALLING_BUBBLE_DIMENSIONS.width,
-                    CALLING_BUBBLE_DIMENSIONS.height,
-                );
+    //         let mut other_bubbles = Vec::new();
 
-                calling_iter += 1;
-                calling_bubbles.push(calling_bubble);
+    //         if org.children.is_empty() {
+    //             // Place callings directly into org bubble
+    //             let mut calling_cursor_x = org_cursor_x;
+    //             let mut calling_cursor_y =
+    //                 DIAGRAM_START_Y + ORG_BUBBLE_TITLE_HEIGHT + CALLING_BUBBLE_MARGINS.top;
 
-                calling_cursor_x += CALLING_BUBBLE_DIMENSIONS.width + CALLING_BUBBLE_MARGINS.right;
+    //             let mut calling_bubbles = Vec::new();
 
-                if calling_cursor_x
-                    + CALLING_BUBBLE_MARGINS.left
-                    + CALLING_BUBBLE_DIMENSIONS.width
-                    + CALLING_BUBBLE_MARGINS.right
-                    > ORG_BUBBLE_WIDTH
-                {
-                    calling_cursor_x = org_cursor_x;
+    //             for calling in &org.callings {
+    //                 let Some(ref member) = calling.member else {
+    //                     continue;
+    //                 };
 
-                    calling_cursor_y += CALLING_BUBBLE_TOTAL_HEIGHT;
-                    org_bubble_height += CALLING_BUBBLE_TOTAL_HEIGHT;
-                }
-            }
+    //                 calling_cursor_x += CALLING_BUBBLE_MARGINS.left;
 
-            other_bubbles.extend(calling_bubbles);
-        } else {
-            // let mut sub_org_bubbles = Vec::new();
+    //                 let calling_bubble = format!(
+    //                     r##"
+    //                             <mxCell id="calling-{}" value="&lt;div&gt;&lt;b&gt;&lt;font style=&quot;font-size: 18px;&quot;&gt;{}&lt;/font&gt;&lt;/b&gt;&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;{}, {}&lt;/div&gt;&lt;div&gt;Since: {}&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;align=left;spacingLeft=0;spacingTop=0;spacing=10;fontSize=16;" vertex="1" parent="{}">
+    //                               <mxGeometry x="{}" y="{}" width="{}" height="{}" as="geometry" />
+    //                             </mxCell>
+    //                     "##,
+    //                     calling_iter,
+    //                     calling.name,
+    //                     member.last_name,
+    //                     member.given_names,
+    //                     member.held_calling_since,
+    //                     org_id,
+    //                     calling_cursor_x,
+    //                     calling_cursor_y,
+    //                     CALLING_BUBBLE_DIMENSIONS.width,
+    //                     CALLING_BUBBLE_DIMENSIONS.height,
+    //                 );
 
-            // for child_org in &org.children {
-            //     if child_org.children.is_empty() {
-            //         // Use child org as sub-org bubble
+    //                 calling_iter += 1;
+    //                 calling_bubbles.push(calling_bubble);
 
-            //         continue;
-            //     }
+    //                 calling_cursor_x += CALLING_BUBBLE_DIMENSIONS.width + CALLING_BUBBLE_MARGINS.right;
 
-            //     // Use grandchild org as sub-org bubble
-            //     for grandchild_org in &child_org.children {
+    //                 if calling_cursor_x
+    //                     + CALLING_BUBBLE_MARGINS.left
+    //                     + CALLING_BUBBLE_DIMENSIONS.width
+    //                     + CALLING_BUBBLE_MARGINS.right
+    //                     > ORG_BUBBLE_WIDTH
+    //                 {
+    //                     calling_cursor_x = org_cursor_x;
 
-            //     }
+    //                     calling_cursor_y += CALLING_BUBBLE_TOTAL_HEIGHT;
+    //                     org_bubble_height += CALLING_BUBBLE_TOTAL_HEIGHT;
+    //                 }
+    //             }
 
-            //     // Place child org callings into "Other" bubble
-            // }
-        }
+    //             other_bubbles.extend(calling_bubbles);
+    //         } else {
+    //             // let mut sub_org_bubbles = Vec::new();
 
-        org_bubble_height += CALLING_BUBBLE_MARGINS.bottom;
+    //             // for child_org in &org.children {
+    //             //     if child_org.children.is_empty() {
+    //             //         // Use child org as sub-org bubble
 
-        let org_bubble = format!(
-            r##"
-                    <mxCell id="{}" value="&lt;font style=&quot;font-size: 22px;&quot;&gt;{}&lt;/font&gt;" style="swimlane;whiteSpace=wrap;html=1;rounded=1;strokeWidth=4;startSize=40;" vertex="1" parent="1">
-                      <mxGeometry x="{}" y="{}" width="{}" height="{}" as="geometry" />
-                    </mxCell>
-            "##,
-            org_id, org_name, org_cursor_x, DIAGRAM_START_Y, ORG_BUBBLE_WIDTH, org_bubble_height,
-        );
+    //             //         continue;
+    //             //     }
 
-        bubbles.push(org_bubble);
-        bubbles.extend(other_bubbles);
+    //             //     // Use grandchild org as sub-org bubble
+    //             //     for grandchild_org in &child_org.children {
 
-        org_cursor_x += ORG_BUBBLE_WIDTH + ORG_BUBBLE_MARGINS.right;
-    }
+    //             //     }
 
-    let diagram_header = format!(
-        r##"<mxfile host="app.diagrams.net" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.2 Safari/605.1.15" version="26.0.5">
-      <diagram id="{}" name="Page-1">
-        <mxGraphModel grid="1" page="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
-          <root>
-            <mxCell id="0" />
-            <mxCell id="1" parent="0" />"##,
-        Uuid::new_v4(),
-    );
+    //             //     // Place child org callings into "Other" bubble
+    //             // }
+    //         }
 
-    let diagram_footer = r##"      </root>
-    </mxGraphModel>
-  </diagram>
-</mxfile>"##;
+    //         org_bubble_height += CALLING_BUBBLE_MARGINS.bottom;
 
-    let mut output_file =
-        std::fs::File::create(&output_file_path).expect("Could not open output file");
+    //         let org_bubble = format!(
+    //             r##"
+    //                     <mxCell id="{}" value="&lt;font style=&quot;font-size: 22px;&quot;&gt;{}&lt;/font&gt;" style="swimlane;whiteSpace=wrap;html=1;rounded=1;strokeWidth=4;startSize=40;" vertex="1" parent="1">
+    //                       <mxGeometry x="{}" y="{}" width="{}" height="{}" as="geometry" />
+    //                     </mxCell>
+    //             "##,
+    //             org_id, org_name, org_cursor_x, DIAGRAM_START_Y, ORG_BUBBLE_WIDTH, org_bubble_height,
+    //         );
 
-    output_file
-        .write_all(diagram_header.as_bytes())
-        .expect("Could not write diagram header");
-    for bubble in bubbles {
-        output_file
-            .write_all(bubble.as_bytes())
-            .expect("Could not write bubble");
-    }
-    output_file
-        .write_all(diagram_footer.as_bytes())
-        .expect("Could not write diagram header");
+    //         bubbles.push(org_bubble);
+    //         bubbles.extend(other_bubbles);
 
-    println!("Generated diagram at '{}'", output_file_path);
+    //         org_cursor_x += ORG_BUBBLE_WIDTH + ORG_BUBBLE_MARGINS.right;
+    //     }
+
+    //     let diagram_header = format!(
+    //         r##"<mxfile host="app.diagrams.net" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.2 Safari/605.1.15" version="26.0.5">
+    //       <diagram id="{}" name="Page-1">
+    //         <mxGraphModel grid="1" page="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+    //           <root>
+    //             <mxCell id="0" />
+    //             <mxCell id="1" parent="0" />"##,
+    //         Uuid::new_v4(),
+    //     );
+
+    //     let diagram_footer = r##"      </root>
+    //     </mxGraphModel>
+    //   </diagram>
+    // </mxfile>"##;
+
+    //     let mut output_file =
+    //         std::fs::File::create(&output_file_path).expect("Could not open output file");
+
+    //     output_file
+    //         .write_all(diagram_header.as_bytes())
+    //         .expect("Could not write diagram header");
+    //     for bubble in bubbles {
+    //         output_file
+    //             .write_all(bubble.as_bytes())
+    //             .expect("Could not write bubble");
+    //     }
+    //     output_file
+    //         .write_all(diagram_footer.as_bytes())
+    //         .expect("Could not write diagram header");
+
+    //     println!("Generated diagram at '{}'", output_file_path);
 }
 
 fn process_child_orgs(children: &serde_json::Value) -> Vec<Organization<'_>> {
@@ -289,7 +333,7 @@ fn process_callings(callings: &serde_json::Value) -> Vec<Calling<'_>> {
 
                 let member = MemberWithCalling {
                     given_names: if name_parts.len() > 1 {
-                        name_parts[1]
+                        name_parts[1].trim()
                     } else {
                         name_parts[0]
                     },
