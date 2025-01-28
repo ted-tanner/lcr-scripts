@@ -1,16 +1,16 @@
 const std = @import("std");
 
-const DateFormatError = error{
+pub const DateFormatError = error{
     InvalidMonth,
     InvalidDay,
-};
+} || std.fmt.AllocPrintError;
 
 pub const Date = struct {
     year: u16,
     month: u8,
     day: u8,
 
-    pub fn allocPrint(self: Date, allocator: std.mem.Allocator) ![]u8 {
+    pub fn allocPrint(self: Date, allocator: std.mem.Allocator) DateFormatError![]u8 {
         const month_str_and_day_count: struct { []const u8, u8 } = switch (self.month) {
             1 => .{ "January", 31 },
             2 => .{ "February", if (self.year % 4 == 0 and (self.year % 100 != 0 or self.year % 400 == 0)) 29 else 28 },

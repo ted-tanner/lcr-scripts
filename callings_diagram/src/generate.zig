@@ -1,69 +1,13 @@
 const std = @import("std");
+const Config = @import("config.zig").Config;
 const data = @import("data.zig");
 
 const DiagramGenerationError = error{
     OrgBubbleWidthTooSmall,
     UnrecognizedOrgName,
-};
+} || std.mem.Allocator.Error || std.fmt.AllocPrintError || data.DateFormatError;
 
-const MarginSet = struct {
-    top: i32,
-    right: i32,
-    bottom: i32,
-    left: i32,
-};
-
-const Dimensions = struct {
-    width: i32,
-    height: i32,
-};
-
-const OrgOrdering = struct {
-    name: []const u8,
-    begins_new_column: bool,
-};
-
-const calling_bubbles_per_row: i32 = 3;
-const diagram_start_x: i32 = 0;
-const diagram_start_y: i32 = 0;
-
-const org_bubble_width: i32 = 1250;
-const org_bubble_title_height: i32 = 38;
-const org_bubble_margins = MarginSet{
-    .top = 0,
-    .right = 80,
-    .bottom = 80,
-    .left = 0,
-};
-
-const sub_org_bubble_horzontal_margins: i32 = 25;
-const sub_org_bubble_vertical_margins: i32 = 40;
-
-const calling_bubble_vertical_margin: i32 = 25;
-const min_horizontal_margin_between_calling_bubbles: i32 = 20;
-const calling_bubble_dimensions = Dimensions{
-    .width = 340,
-    .height = 110,
-};
-
-const min_org_bubble_height: i32 = org_bubble_title_height + calling_bubble_dimensions.height + 2 * calling_bubble_vertical_margin;
-
-// Tuple of org name and whether org starts new column
-const org_ordering = [_]OrgOrdering{
-    OrgOrdering{ .name = "Primary", .begins_new_column = false },
-    OrgOrdering{ .name = "Relief Society", .begins_new_column = true },
-    OrgOrdering{ .name = "Young Women", .begins_new_column = false },
-    OrgOrdering{ .name = "Bishopric", .begins_new_column = true },
-    OrgOrdering{ .name = "Sunday School", .begins_new_column = false },
-    OrgOrdering{ .name = "Elders Quorum", .begins_new_column = true },
-    OrgOrdering{ .name = "Aaronic Priesthood Quorums", .begins_new_column = false },
-    OrgOrdering{ .name = "Ward Missionaries", .begins_new_column = true },
-    OrgOrdering{ .name = "Full-Time Missionaries", .begins_new_column = false },
-    OrgOrdering{ .name = "Temple and Family History", .begins_new_column = false },
-    OrgOrdering{ .name = "Other Callings", .begins_new_column = false },
-};
-
-pub fn generate_diagram_file_contents(allocator: std.mem.Allocator, orgs: std.StringArrayHashMap(data.Organization)) ![]const u8 {
+pub fn diagram_file_contents(allocator: std.mem.Allocator, orgs: std.StringArrayHashMap(data.Organization), conf: Config) ![]const u8 {
     var file_contents = std.ArrayList(u8).init(allocator);
 
     var rng = std.rand.DefaultPrng.init(@as(u64, @bitCast(std.time.microTimestamp())));
@@ -78,22 +22,25 @@ pub fn generate_diagram_file_contents(allocator: std.mem.Allocator, orgs: std.St
 
     try file_contents.appendSlice(diagram_header);
 
-    const calling_bubble_row_width_no_margins: i32 = calling_bubble_dimensions.width * calling_bubbles_per_row;
-    const calling_bubble_left_margin_in_org_bubble: i32 = (org_bubble_width - calling_bubble_row_width_no_margins) / (calling_bubbles_per_row + 1);
+    // TODO
+    const min_org_bubble_height: i32 = conf.org_bubble_title_height + conf.calling_bubble_dimensions.height + 2 * conf.calling_bubble_vertical_margins;
 
-    const sub_org_bubble_width: i32 = org_bubble_width - 2 * sub_org_bubble_horzontal_margins;
-    const calling_bubble_left_margin_in_sub_org_bubble: i32 = (sub_org_bubble_width - calling_bubble_row_width_no_margins) / (calling_bubbles_per_row + 1);
+    const calling_bubble_row_width_no_margins: i32 = conf.calling_bubble_dimensions.width * conf.calling_bubbles_per_row;
+    const calling_bubble_left_margin_in_org_bubble: i32 = @divTrunc((conf.org_bubble_width - calling_bubble_row_width_no_margins), (conf.calling_bubbles_per_row + 1));
 
-    if (calling_bubble_left_margin_in_sub_org_bubble < min_horizontal_margin_between_calling_bubbles) {
+    const sub_org_bubble_width: i32 = conf.org_bubble_width - 2 * conf.sub_org_bubble_horzontal_margins;
+    const calling_bubble_left_margin_in_sub_org_bubble: i32 = @divTrunc((sub_org_bubble_width - calling_bubble_row_width_no_margins), (conf.calling_bubbles_per_row + 1));
+
+    if (calling_bubble_left_margin_in_sub_org_bubble < conf.calling_bubble_min_horizontal_margin) {
         return DiagramGenerationError.OrgBubbleWidthTooSmall;
     }
 
-    var org_bubble_cursor_x: i32 = diagram_start_x;
-    var org_bubble_cursor_y: i32 = diagram_start_y;
+    var org_bubble_cursor_x: i32 = conf.diagram_start_x;
+    var org_bubble_cursor_y: i32 = conf.diagram_start_y;
 
     var calling_num: i32 = 0;
 
-    for (org_ordering) |ordering| {
+    for (conf.org_ordering) |ordering| {
         const org_name = try sanitize(allocator, ordering.name);
         const start_new_column = ordering.begins_new_column;
 
@@ -104,11 +51,11 @@ pub fn generate_diagram_file_contents(allocator: std.mem.Allocator, orgs: std.St
         org_bubble_id = try std.fmt.allocPrint(allocator, "{s}-{}", .{ org_bubble_id, rand_tag(&rng) });
 
         if (start_new_column) {
-            org_bubble_cursor_x += org_bubble_width + org_bubble_margins.right + org_bubble_margins.left;
-            org_bubble_cursor_y = diagram_start_y;
+            org_bubble_cursor_x += conf.org_bubble_width + conf.org_bubble_margins.right + conf.org_bubble_margins.left;
+            org_bubble_cursor_y = conf.diagram_start_y;
         }
 
-        org_bubble_cursor_y += org_bubble_margins.top;
+        org_bubble_cursor_y += conf.org_bubble_margins.top;
         const org_bubble_x: i32 = org_bubble_cursor_x;
         const org_bubble_y: i32 = org_bubble_cursor_y;
 
@@ -117,20 +64,20 @@ pub fn generate_diagram_file_contents(allocator: std.mem.Allocator, orgs: std.St
         var calling_bubble_cursor_x: i32 = 0;
         var calling_bubble_cursor_y: i32 = 0;
 
-        calling_bubble_cursor_y += org_bubble_title_height + calling_bubble_vertical_margin;
+        calling_bubble_cursor_y += conf.org_bubble_title_height + conf.calling_bubble_vertical_margins;
 
-        var i: usize = 0;
+        var i: i32 = 0;
         for (org.callings.items) |calling| {
             const member = calling.member orelse continue;
 
             if (i != 0) {
-                if (i % calling_bubbles_per_row == 0) {
+                if (@mod(i, conf.calling_bubbles_per_row) == 0) {
                     calling_bubble_cursor_x = 0;
 
-                    const calling_bubble_height_with_margin = calling_bubble_dimensions.height + calling_bubble_vertical_margin;
+                    const calling_bubble_height_with_margin = conf.calling_bubble_dimensions.height + conf.calling_bubble_vertical_margins;
                     calling_bubble_cursor_y += calling_bubble_height_with_margin;
                 } else {
-                    calling_bubble_cursor_x += calling_bubble_dimensions.width;
+                    calling_bubble_cursor_x += conf.calling_bubble_dimensions.width;
                 }
             }
 
@@ -149,8 +96,8 @@ pub fn generate_diagram_file_contents(allocator: std.mem.Allocator, orgs: std.St
                 org_bubble_id,
                 calling_bubble_cursor_x,
                 calling_bubble_cursor_y,
-                calling_bubble_dimensions.width,
-                calling_bubble_dimensions.height,
+                conf.calling_bubble_dimensions.width,
+                conf.calling_bubble_dimensions.height,
             });
             calling_num += 1;
 
@@ -163,7 +110,7 @@ pub fn generate_diagram_file_contents(allocator: std.mem.Allocator, orgs: std.St
 
         // Assumption: If an org has sub-orgs, there are no callings in the org that aren't part of
         //             a sub-org
-        var sub_org_bubble_cursor_y: i32 = org_bubble_title_height;
+        var sub_org_bubble_cursor_y: i32 = conf.org_bubble_title_height;
         var all_sub_orgs_in_org_bubble_elems = std.ArrayList(std.ArrayList([]const u8)).init(allocator);
 
         for (org.children.items) |child| {
@@ -200,20 +147,20 @@ pub fn generate_diagram_file_contents(allocator: std.mem.Allocator, orgs: std.St
             _ = try sub_org_bubble_elems.addOne(); // Placeholder for sub-org bubble itself
 
             calling_bubble_cursor_x = 0;
-            calling_bubble_cursor_y = org_bubble_title_height + calling_bubble_vertical_margin;
+            calling_bubble_cursor_y = conf.org_bubble_title_height + conf.calling_bubble_vertical_margins;
 
             i = 0;
             for (callings.items) |calling| {
                 const member = calling.member orelse continue;
 
                 if (i != 0) {
-                    if (i % calling_bubbles_per_row == 0) {
+                    if (@mod(i, conf.calling_bubbles_per_row) == 0) {
                         calling_bubble_cursor_x = 0;
 
-                        const calling_bubble_height_with_margin = calling_bubble_dimensions.height + calling_bubble_vertical_margin;
+                        const calling_bubble_height_with_margin = conf.calling_bubble_dimensions.height + conf.calling_bubble_vertical_margins;
                         calling_bubble_cursor_y += calling_bubble_height_with_margin;
                     } else {
-                        calling_bubble_cursor_x += calling_bubble_dimensions.width;
+                        calling_bubble_cursor_x += conf.calling_bubble_dimensions.width;
                     }
                 }
 
@@ -232,8 +179,8 @@ pub fn generate_diagram_file_contents(allocator: std.mem.Allocator, orgs: std.St
                     sub_org_bubble_id,
                     calling_bubble_cursor_x,
                     calling_bubble_cursor_y,
-                    calling_bubble_dimensions.width,
-                    calling_bubble_dimensions.height,
+                    conf.calling_bubble_dimensions.width,
+                    conf.calling_bubble_dimensions.height,
                 });
                 calling_num += 1;
 
@@ -245,12 +192,12 @@ pub fn generate_diagram_file_contents(allocator: std.mem.Allocator, orgs: std.St
             // The first element in sub_org_calling_bubble_elems is a placeholder for the sub-org bubble itself,
             // so subtract one from the length of the sub_org_bubble_elems list to do this calculation
             const sub_org_filled_callings_count: i32 = if (sub_org_bubble_elems.items.len - 1 > std.math.maxInt(i32)) std.math.maxInt(i32) else @intCast(sub_org_bubble_elems.items.len - 1);
-            var sub_org_bubble_height: i32 = (@divTrunc(sub_org_filled_callings_count - 1, calling_bubbles_per_row) + 1) * (calling_bubble_dimensions.height + calling_bubble_vertical_margin) + calling_bubble_vertical_margin + org_bubble_title_height;
+            var sub_org_bubble_height: i32 = (@divTrunc(sub_org_filled_callings_count - 1, conf.calling_bubbles_per_row) + 1) * (conf.calling_bubble_dimensions.height + conf.calling_bubble_vertical_margins) + conf.calling_bubble_vertical_margins + conf.org_bubble_title_height;
             if (sub_org_bubble_height < min_org_bubble_height) {
                 sub_org_bubble_height = min_org_bubble_height;
             }
 
-            sub_org_bubble_cursor_y += sub_org_bubble_vertical_margins;
+            sub_org_bubble_cursor_y += conf.sub_org_bubble_vertical_margins;
 
             const sub_org_bubble_elem = try std.fmt.allocPrint(allocator,
                 \\          <mxCell id="{s}" value="&lt;font style=&quot;font-size: 22px;&quot;&gt;{s}&lt;/font&gt;" style="swimlane;whiteSpace=wrap;html=1;rounded=1;strokeWidth=4;startSize=40;strokeColor=#9E9E9E;fontColor=#6B6B6B;" vertex="1" parent="{s}">
@@ -260,7 +207,7 @@ pub fn generate_diagram_file_contents(allocator: std.mem.Allocator, orgs: std.St
                 sub_org_bubble_id,
                 child_name,
                 org_bubble_id,
-                sub_org_bubble_horzontal_margins,
+                conf.sub_org_bubble_horzontal_margins,
                 sub_org_bubble_cursor_y,
                 sub_org_bubble_width,
                 sub_org_bubble_height,
@@ -277,9 +224,9 @@ pub fn generate_diagram_file_contents(allocator: std.mem.Allocator, orgs: std.St
         var org_bubble_height: i32 = 0;
 
         if (org.children.items.len == 0) {
-            org_bubble_height = (@divTrunc(org_filled_callings_count - 1, calling_bubbles_per_row) + 1) * (calling_bubble_dimensions.height + calling_bubble_vertical_margin) + calling_bubble_vertical_margin + org_bubble_title_height;
+            org_bubble_height = (@divTrunc(org_filled_callings_count - 1, conf.calling_bubbles_per_row) + 1) * (conf.calling_bubble_dimensions.height + conf.calling_bubble_vertical_margins) + conf.calling_bubble_vertical_margins + conf.org_bubble_title_height;
         } else {
-            org_bubble_height = sub_org_bubble_cursor_y + sub_org_bubble_vertical_margins;
+            org_bubble_height = sub_org_bubble_cursor_y + conf.sub_org_bubble_vertical_margins;
         }
 
         if (org_bubble_height < min_org_bubble_height) {
@@ -297,7 +244,7 @@ pub fn generate_diagram_file_contents(allocator: std.mem.Allocator, orgs: std.St
             org_name,
             org_bubble_x,
             org_bubble_y,
-            org_bubble_width,
+            conf.org_bubble_width,
             org_bubble_height,
         });
 
@@ -313,7 +260,7 @@ pub fn generate_diagram_file_contents(allocator: std.mem.Allocator, orgs: std.St
             }
         }
 
-        org_bubble_cursor_y += org_bubble_margins.bottom;
+        org_bubble_cursor_y += conf.org_bubble_margins.bottom;
     }
 
     const diagram_footer = try std.fmt.allocPrint(allocator,
@@ -328,7 +275,7 @@ pub fn generate_diagram_file_contents(allocator: std.mem.Allocator, orgs: std.St
     return file_contents.items;
 }
 
-fn sanitize(allocator: std.mem.Allocator, str: []const u8) ![]u8 {
+fn sanitize(allocator: std.mem.Allocator, str: []const u8) std.mem.Allocator.Error![]u8 {
     const sanitized = try allocator.alloc(u8, std.mem.replacementSize(u8, str, "&", "and"));
     _ = std.mem.replace(u8, str, "&", "and", sanitized);
     return sanitized;
