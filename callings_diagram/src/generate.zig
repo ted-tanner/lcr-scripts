@@ -22,7 +22,6 @@ pub fn diagram_file_contents(allocator: std.mem.Allocator, orgs: std.StringArray
 
     try file_contents.appendSlice(diagram_header);
 
-    // TODO
     const min_org_bubble_height: i32 = conf.org_bubble_title_height + conf.calling_bubble_dimensions.height + 2 * conf.calling_bubble_vertical_margins;
 
     const calling_bubble_row_width_no_margins: i32 = conf.calling_bubble_dimensions.width * conf.calling_bubbles_per_row;

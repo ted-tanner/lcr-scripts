@@ -1,0 +1,67 @@
+{
+    "diagram_start_x": 0,
+    "diagram_start_y": 0,
+    "calling_bubbles_per_row": 3,
+    "org_bubble_width": 1250,
+    "org_bubble_title_height": 38,
+    "org_bubble_margins": {
+        "top": 0,
+        "right": 80,
+        "bottom": 80,
+        "left": 0
+    },
+    "sub_org_bubble_horzontal_margins": 25,
+    "sub_org_bubble_vertical_margins": 40,
+    "calling_bubble_vertical_margins": 25,
+    "calling_bubble_dimensions": {
+        "width": 340,
+        "height": 110
+    },
+    "calling_bubble_min_horizontal_margin": 20,
+    "org_ordering": [
+        {
+            "name": "Primary",
+            "begins_new_column": false
+        },
+        {
+            "name": "Relief Society",
+            "begins_new_column": true
+        },
+        {
+            "name": "Young Women",
+            "begins_new_column": false
+        },
+        {
+            "name": "Bishopric",
+            "begins_new_column": true
+        },
+        {
+            "name": "Sunday School",
+            "begins_new_column": false
+        },
+        {
+            "name": "Elders Quorum",
+            "begins_new_column": true
+        },
+        {
+            "name": "Aaronic Priesthood Quorums",
+            "begins_new_column": false
+        },
+        {
+            "name": "Ward Missionaries",
+            "begins_new_column": true
+        },
+        {
+            "name": "Full-Time Missionaries",
+            "begins_new_column": false
+        },
+        {
+            "name": "Temple and Family History",
+            "begins_new_column": false
+        },
+        {
+            "name": "Other Callings",
+            "begins_new_column": false
+        }
+    ]
+}

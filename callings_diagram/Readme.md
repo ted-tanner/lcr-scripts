@@ -19,3 +19,14 @@ The `diagram-config.json` file allows you to configure the appearance of the gen
 ## Viewing or editing the diagram
 
 The generated diagram can be uploaded to a file storage service (e.g. Google Drive) and viewed/edited on [draw.io](https://draw.io). There is also a draw.io desktop app available that allows you to view and edit the file without uploading it to a service.
+
+## Building the binary (may require a little understanding of programming)
+
+The program is written in Zig. You may [download the Zig compiler here](https://ziglang.org/download). Once installed and added to your path, build the binary by running the following command in the directory above the `src` folder:
+
+``` shell
+zig build --release=fast
+```
+
+The compiled binary should be in the `./zig-out/bin` directory.
+
