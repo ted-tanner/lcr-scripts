@@ -20,7 +20,7 @@ The `diagram-config.json` file allows you to configure the appearance of the gen
 
 The generated diagram can be uploaded to a file storage service (e.g. Google Drive) and viewed/edited on [draw.io](https://draw.io). There is also a draw.io desktop app available that allows you to view and edit the file without uploading it to a service.
 
-## Building the binary (may require a little understanding of programming)
+## Building the binary (may require a little command-line familiarity)
 
 The program is written in Rust. You may [download the Rust compiler here](https://www.rust-lang.org/tools/install). Once installed and added to your path, build the binary by running the following command in the directory above the `src` folder:
 
