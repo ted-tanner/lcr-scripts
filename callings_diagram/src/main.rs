@@ -28,7 +28,7 @@ fn main() {
         }
     };
 
-    let conf = match config::parse(&config_file_contents) {
+    let conf = match serde_json::from_str(&config_file_contents) {
         Ok(config) => config,
         Err(err) => {
             eprintln!("Failed to parse config file 'diagram-config.json': {}", err);

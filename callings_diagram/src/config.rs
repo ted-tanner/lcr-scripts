@@ -35,8 +35,3 @@ pub struct Config {
     pub calling_bubble_min_horizontal_margin: i32,
     pub org_ordering: Vec<OrgOrdering>,
 }
-
-pub fn parse(config_file_contents: &str) -> Result<Config, serde_json::Error> {
-    let config: Config = serde_json::from_str(config_file_contents)?;
-    Ok(config)
-}
