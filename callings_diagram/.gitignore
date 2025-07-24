@@ -1,3 +1,2 @@
-zig-out/
-.zig-cache/
 !diagram-config.json
+target/

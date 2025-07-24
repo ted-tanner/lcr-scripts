@@ -22,11 +22,11 @@ The generated diagram can be uploaded to a file storage service (e.g. Google Dri
 
 ## Building the binary (may require a little understanding of programming)
 
-The program is written in Zig. You may [download the Zig compiler here](https://ziglang.org/download). Once installed and added to your path, build the binary by running the following command in the directory above the `src` folder:
+The program is written in Rust. You may [download the Rust compiler here](https://www.rust-lang.org/tools/install). Once installed and added to your path, build the binary by running the following command in the directory above the `src` folder:
 
 ``` shell
-zig build --release=fast
+cargo build --release
 ```
 
-The compiled binary should be in the `./zig-out/bin` directory.
+The compiled binary should be in the `./target/release` directory.
 
